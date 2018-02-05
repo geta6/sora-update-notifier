@@ -1,0 +1,16 @@
+# Ignore env specific.
+.env*
+
+# Ignore modules.
+node_modules
+npm-shrinkwrap.json
+package-lock.json
+
+# Ignore npm garbages.
+npm-debug.log
+isolate-*
+
+# Ignore system files.
+.DS_Store
+*.sw*
+

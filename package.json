@@ -1,0 +1,11 @@
+{
+  "name": "sora",
+  "version": "1.0.0",
+  "main": "index.js",
+  "license": "MIT",
+  "dependencies": {
+    "axios": "0.17.1",
+    "cheerio": "1.0.0-rc.2",
+    "dotenv": "5.0.0"
+  }
+}
