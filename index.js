@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-const fs = require('fs');
+const fs = require('fs-extra');
 const path = require('path');
 const cloneDeep = require('lodash/cloneDeep');
 const isEqual = require('lodash/isEqual');
@@ -118,10 +118,6 @@ if (typeof process.env.SLACK_CHANNEL === 'undefined') {
   }
 
   if (releases.sora.length > 0 || releases.sorajs.length > 0) {
-    await new Promise((resolve, reject) => {
-      fs.writeFile('./tmp/cache.json', JSON.stringify(cache), 'utf-8', (err) => {
-        err ? reject(err) : resolve();
-      });
-    });
+    await fs.writeJson('./tmp/cache.json', cache, { spaces: 2 });
   }
 }());
