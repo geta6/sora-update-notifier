@@ -22,10 +22,11 @@ if (typeof process.env.SLACK_CHANNEL === 'undefined') {
 }
 
 (async function main() {
+  const target = path.join(__dirname, 'tmp', 'cache.json');
   let updated = false;
   let cache;
   try {
-    cache = require('./tmp/cache.json');
+    cache = require(target);
   } catch(e) {
     cache = {};
   }
@@ -118,6 +119,6 @@ if (typeof process.env.SLACK_CHANNEL === 'undefined') {
   }
 
   if (releases.sora.length > 0 || releases.sorajs.length > 0) {
-    await fs.writeJson('./tmp/cache.json', cache, { spaces: 2 });
+    await fs.writeJson(target, cache, { spaces: 2 });
   }
 }());
