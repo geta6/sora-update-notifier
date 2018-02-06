@@ -11,17 +11,15 @@ const cheerio = require('cheerio');
 
 require('dotenv').config();
 
-function validate() {
-  let correct = true;
-  if (typeof process.env.SLACK_TOKEN === 'undefined') {
-    log(colors.red('Missing required env "SLACK_TOKEN", you can use ".env".'));
-    correct = false;
-  }
-  if (typeof process.env.SLACK_CHANNEL === 'undefined') {
-    log(colors.red('Missing required env "SLACK_CHANNEL", you can use ".env".'));
-    correct = false;
-  }
-};
+if (typeof process.env.SLACK_TOKEN === 'undefined') {
+  log(colors.red('Missing required env "SLACK_TOKEN", you can use ".env".'));
+  process.exit(1);
+}
+
+if (typeof process.env.SLACK_CHANNEL === 'undefined') {
+  log(colors.red('Missing required env "SLACK_CHANNEL", you can use ".env".'));
+  process.exit(1);
+}
 
 (async function main() {
   let updated = false;
@@ -76,42 +74,38 @@ function validate() {
   if (releases.sora.length > 0) {
     cache.sora = releases.sora[0].title;
 
-    if (validate()) {
-      for (const release of releases.sora) {
-        axios.post(`https://hooks.slack.com/services/${process.env.SLACK_TOKEN}`, JSON.stringify({
-          channel: `#${process.env.SLACK_CHANNEL}`,
+    for (const release of releases.sora) {
+      axios.post(`https://hooks.slack.com/services/${process.env.SLACK_TOKEN}`, JSON.stringify({
+        channel: `#${process.env.SLACK_CHANNEL}`,
         attachments: [{
           fallback: `Sora v${release.title} released`,
           text: `<https://sora.shiguredo.jp/doc/RELEASE_NOTE.html|Sora v${release.title} released>`,
-            color: '#95D8EB',
+          color: '#95D8EB',
           fields: release.section.filter((section) => section.notes.split('\n').length < 10).map((section) => ({
             title: section.title,
             value: section.notes,
           })),
         }],
-        }));
-      }
+      }));
     }
   }
 
   if (releases.sorajs.length > 0) {
     cache.sorajs = releases.sorajs[0].title;
 
-    if (validate()) {
-      for (const release of releases.sorajs) {
-        axios.post(`https://hooks.slack.com/services/${process.env.SLACK_TOKEN}`, JSON.stringify({
-          channel: `#${process.env.SLACK_CHANNEL}`,
-          attachments: [{
-            fallback: `Sora JavaScript SDK v${release.title} released`,
-            text: `<https://sora.shiguredo.jp/js-sdk-doc/release.html|Sora JavaScript SDK v${release.title} released>`,
-            color: '#95D8EB',
-            fields: release.section.filter((section) => section.notes.split('\n').length < 10).map((section) => ({
-              title: section.title,
-              value: section.notes,
-            })),
-          }],
-        }));
-      }
+    for (const release of releases.sorajs) {
+      axios.post(`https://hooks.slack.com/services/${process.env.SLACK_TOKEN}`, JSON.stringify({
+        channel: `#${process.env.SLACK_CHANNEL}`,
+        attachments: [{
+          fallback: `Sora JavaScript SDK v${release.title} released`,
+          text: `<https://sora.shiguredo.jp/js-sdk-doc/release.html|Sora JavaScript SDK v${release.title} released>`,
+          color: '#95D8EB',
+          fields: release.section.filter((section) => section.notes.split('\n').length < 10).map((section) => ({
+            title: section.title,
+            value: section.notes,
+          })),
+        }],
+      }));
     }
   }
 
@@ -131,4 +125,3 @@ function validate() {
     });
   }
 }());
-
