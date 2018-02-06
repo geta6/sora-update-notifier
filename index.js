@@ -1,21 +1,36 @@
 const fs = require('fs');
 const path = require('path');
+const cloneDeep = require('lodash/cloneDeep');
+const isEqual = require('lodash/isEqual');
+const log = require('fancy-log');
+const colors = require('ansi-colors');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
 require('dotenv').config();
 
-if (typeof process.env.SLACK_TOKEN === 'undefined') {
-  throw new Error('Missing required env "SLACK_TOKEN", you can use ".env".');
-}
-
-if (typeof process.env.SLACK_CHANNEL === 'undefined') {
-  throw new Error('Missing required env "SLACK_CHANNEL", you can use ".env".');
-}
+function validate() {
+  let correct = true;
+  if (typeof process.env.SLACK_TOKEN === 'undefined') {
+    log(colors.red('Missing required env "SLACK_TOKEN", you can use ".env".'));
+    correct = false;
+  }
+  if (typeof process.env.SLACK_CHANNEL === 'undefined') {
+    log(colors.red('Missing required env "SLACK_CHANNEL", you can use ".env".'));
+    correct = false;
+  }
+};
 
 (async function main() {
   let updated = false;
-  const cache = require('./cache.json');
+  let cache;
+  try {
+    cache = require('./tmp/cache.json');
+  } catch(e) {
+    cache = {};
+  }
+
+  const prevCache = cloneDeep(cache);
   const releases = { sora: [], sorajs: [] };
 
   { // Sora
@@ -59,43 +74,59 @@ if (typeof process.env.SLACK_CHANNEL === 'undefined') {
   if (releases.sora.length > 0) {
     cache.sora = releases.sora[0].title;
 
-    for (const release of releases.sora) {
-      axios.post(`https://hooks.slack.com/services/${process.env.SLACK_TOKEN}`, JSON.stringify({
-        channel: `#${process.env.SLACK_CHANNEL}`,
+    if (validate()) {
+      for (const release of releases.sora) {
+        axios.post(`https://hooks.slack.com/services/${process.env.SLACK_TOKEN}`, JSON.stringify({
+          channel: `#${process.env.SLACK_CHANNEL}`,
         attachments: [{
           fallback: `Sora v${release.title} released`,
           text: `<https://sora.shiguredo.jp/doc/RELEASE_NOTE.html|Sora v${release.title} released>`,
-          color: '#95D8EB',
+            color: '#95D8EB',
           fields: release.section.filter((section) => section.notes.split('\n').length < 10).map((section) => ({
             title: section.title,
             value: section.notes,
           })),
         }],
-      }));
+        }));
+      }
     }
   }
 
   if (releases.sorajs.length > 0) {
     cache.sorajs = releases.sorajs[0].title;
 
-    for (const release of releases.sorajs) {
-      axios.post(`https://hooks.slack.com/services/${process.env.SLACK_TOKEN}`, JSON.stringify({
-        channel: `#${process.env.SLACK_CHANNEL}`,
-        attachments: [{
-          fallback: `Sora JavaScript SDK v${release.title} released`,
-          text: `<https://sora.shiguredo.jp/js-sdk-doc/release.html|Sora JavaScript SDK v${release.title} released>`,
-          color: '#95D8EB',
-          fields: release.section.filter((section) => section.notes.split('\n').length < 10).map((section) => ({
-            title: section.title,
-            value: section.notes,
-          })),
-        }],
-      }));
+    if (validate()) {
+      for (const release of releases.sorajs) {
+        axios.post(`https://hooks.slack.com/services/${process.env.SLACK_TOKEN}`, JSON.stringify({
+          channel: `#${process.env.SLACK_CHANNEL}`,
+          attachments: [{
+            fallback: `Sora JavaScript SDK v${release.title} released`,
+            text: `<https://sora.shiguredo.jp/js-sdk-doc/release.html|Sora JavaScript SDK v${release.title} released>`,
+            color: '#95D8EB',
+            fields: release.section.filter((section) => section.notes.split('\n').length < 10).map((section) => ({
+              title: section.title,
+              value: section.notes,
+            })),
+          }],
+        }));
+      }
     }
   }
 
+  if (!isEqual(cache, prevCache)) {
+    for (const name of Object.keys(cache)) {
+      log(`${name} updated: ${cache[name]}`);
+    }
+  } else {
+    log('There is no update.');
+  }
+
   if (releases.sora.length > 0 || releases.sorajs.length > 0) {
-    await new Promise((resolve, reject) => fs.writeFile(path.join(__dirname, 'cache.json'), JSON.stringify(cache), 'utf-8', (err) => err ? reject(err) : resolve()));
+    await new Promise((resolve, reject) => {
+      fs.writeFile('./tmp/cache.json', JSON.stringify(cache), 'utf-8', (err) => {
+        err ? reject(err) : resolve();
+      });
+    });
   }
 }());
 

@@ -6,6 +6,7 @@ Thumbs.db
 
 # Env
 #
+tmp
 .env*
 
 # Node.js
