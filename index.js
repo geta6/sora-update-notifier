@@ -9,7 +9,7 @@ const colors = require('ansi-colors');
 const axios = require('axios');
 const cheerio = require('cheerio');
 
-require('dotenv').config();
+require('dotenv').config({ path: path.join(__dirname, '.env') });
 
 if (typeof process.env.SLACK_TOKEN === 'undefined') {
   log(colors.red('Missing required env "SLACK_TOKEN", you can use ".env".'));
